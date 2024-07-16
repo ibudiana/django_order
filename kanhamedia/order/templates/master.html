@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}{% endblock %}</title>
+
+    {% load bootstrap5 %} 
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+
+    <script>
+
+      let totalCost = 0;
+      let selectedDomains = [];
+      let selectedTemplates = [];
+      let selectedPackage = null;
+      let selectedPaymentMethod = null;
+
+      function searchDomain() {
+        const recommendations = [ { domain: "kanhamedia.id", price: 327000 }, { domain: "kanhamedia.co.id", price: 527000 }, ];
+
+        const recommendationList          = document.getElementById("recommendation-list");
+        recommendationList.innerHTML      = "";
+
+        recommendations.forEach((item) => {
+          const listItem                  = document.createElement("div");
+          listItem.className              = "list-group-item list-group-item-action d-flex justify-content-between align-items-center";
+          listItem.innerHTML              = `${item.domain}
+          <div class="d-flex flex-column align-items-end">
+            <small class="text-muted"><s>Rp 400.000</s></small>
+            <strong>Rp ${item.price} / tahun</strong>
+            <button class="btn btn-primary btn-sm mt-2" onclick="addDomain('${item.domain}', ${item.price})">Pilih</button>
+          </div>`;
+          recommendationList.appendChild(listItem);
+        });
+      }
+
+      function selectPackage(packageId, price) {
+        selectedPackage = { id: packageId, price };
+
+        updateSummary();
+      }
+
+      function addDomain(domain, price) {
+        selectedDomains = []
+
+        selectedDomains.push({ domain, price });
+        document.getElementById("continue-button").disabled = false;
+
+        updateSummary()
+      }
+
+      function selectTemplate(templateName) {
+        selectedTemplates = []
+
+        selectedTemplates.push({ title: templateName, price: 900000});
+        document.getElementById("continue-button").disabled = false;
+
+        updateSummary();
+      }
+    
+      function selectPaymentMethod(method) {
+        selectedPaymentMethod = method;
+        document.getElementById("continue-button").disabled = false;
+        
+        updateSummary();
+      }
+
+      function updateSummary() {
+        const summary = document.getElementById("order-summary");
+        summary.innerHTML = "";
+    
+        // Ringkasan Domain
+        selectedDomains.forEach(({ domain, price }) => {
+            const newItem = document.createElement("div");
+            newItem.className = "list-group-item d-flex justify-content-between align-items-center";
+            newItem.innerHTML = `${domain} <span class="badge badge-pill text-dark">${price}</span>`;
+            summary.appendChild(newItem);
+        });
+    
+        // Ringkasan Template
+        selectedTemplates.forEach(({ title, price }) => {
+            const newItem = document.createElement("div");
+            newItem.className = "list-group-item d-flex justify-content-between align-items-center";
+            newItem.innerHTML = `${title} <span class="badge badge-pill text-dark">${price}</span>`;
+            summary.appendChild(newItem);
+        });
+    
+        // Ringkasan Paket
+        if (selectedPackage) {
+            const newItem = document.createElement("div");
+            newItem.className = "list-group-item d-flex justify-content-between align-items-center";
+            newItem.innerHTML = `${selectedPackage.id} <span class="badge badge-pill text-dark">${selectedPackage.price}</span>`;
+            summary.appendChild(newItem);
+        }
+
+        if (selectedPaymentMethod) {
+          const continueButton = document.getElementById("continue-button");
+          continueButton.outerHTML = '<button type="button" class="btn btn-primary mt-3" data-toggle="modal" data-target="#orderModal">Pesan Sekarang</button>';        
+          //const continueButton = document.getElementById("continue-button");
+          //continueButton.outerHTML = '<a href="/order" class="btn btn-primary mt-3">Pesan Sekarang</a>';
+        }
+    
+        // Hitung total biaya
+        totalCost = selectedDomains.reduce((sum, { price }) => sum + price, 0) + 
+                    selectedTemplates.reduce((sum, { price }) => sum + price, 0) + 
+                    (selectedPackage ? selectedPackage.price : 0);
+    
+        document.getElementById("total-cost").innerText = `Rp ${totalCost}`;
+      }
+
+      let currentStep = 1;
+      function goToNextStep() {
+        const currentStepId = "step" + currentStep;
+        const nextStepId = "step" + (currentStep + 1);
+        
+        document.getElementById(currentStepId).style.display = "none";
+
+        if(currentStep == 2){
+          const inputs = ["ktp-number", "name", "email", "phone"];
+
+          inputs.forEach(inputId => {
+              const inputElement = document.getElementById(inputId);
+              
+              if (inputElement) {
+                  inputElement.addEventListener("focus", () => {
+                      const errorElement = document.getElementById(`${inputId}-error`);
+                      if (errorElement) {
+                          errorElement.innerText = "";
+                      }
+                  });
+
+                  inputElement.addEventListener("input", () => {
+                      validateForm();
+                  });
+              }
+          });
+
+        }
+        
+        if (document.getElementById(nextStepId)) {
+          document.getElementById(nextStepId).style.display = "block";
+          currentStep++;
+          document.getElementById("continue-button").disabled = true;
+
+        } else {
+          document.getElementById("nextButton").style.display = "none";
+        }
+
+        updateSummary();
+
+      }
+
+      function validateForm() {
+        const ktpNumber     = document.getElementById("ktp-number").value;
+        const name          = document.getElementById("name").value;
+        const email         = document.getElementById("email").value;
+        const phone         = document.getElementById("phone").value;
+    
+        const isKtpValid = /^\d{15}$/.test(ktpNumber);
+        const isNameValid = /^[A-Za-z\s]+$/.test(name);
+        const isEmailValid = /.+@.+\..+/.test(email);
+        const isPhoneValid = /^\d+$/.test(phone);
+    
+        if (ktpNumber) {
+            document.getElementById("ktp-error").innerText = isKtpValid ? "" : "KTP harus 15 digit angka.";
+        }
+        if (name) {
+            document.getElementById("name-error").innerText = isNameValid ? "" : "Nama hanya boleh huruf.";
+        }
+        if (email) {
+            document.getElementById("email-error").innerText = isEmailValid ? "" : "Email tidak valid.";
+        }
+        if (phone) {
+            document.getElementById("phone-error").innerText = isPhoneValid ? "" : "No. Handphone hanya boleh angka.";
+        }
+    
+        const isFormValid = isKtpValid && isNameValid && isEmailValid && isPhoneValid;
+    
+        document.getElementById("continue-button").disabled = !isFormValid;
+      } 
+
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('input[name="paket"]').forEach(radio => {
+          radio.addEventListener('change', (event) => {
+              const price = parseInt(event.target.nextElementSibling.querySelector('strong').innerText.replace(/[^0-9]/g, ''), 10);
+              selectPackage(event.target.nextElementSibling.querySelector('h5').innerText, price);
+          });
+        });
+
+        document.querySelectorAll('input[name="metode"]').forEach(radio => {
+          radio.addEventListener('change', (event) => {
+              selectPaymentMethod(event.target.nextElementSibling.querySelector('strong').innerText);
+          });
+        });
+
+     });
+    
+    </script>
+
+  </head>
+  <body class="bg-light"> 
+    <div class="container">
+      <nav class="navbar navbar-expand-lg bg-body-tertiary rounded bg-white">
+        <div class="container-fluid">
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarsExample11"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarsExample11">
+            <ul class="navbar-nav col-lg-3 justify-content-lg">
+              <li class="nav-item">
+                <a class="nav-link active" href="#">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">About</a>
+              </li>
+              <li class="nav-item dropdown">
+                <a
+                  class="nav-link dropdown-toggle"
+                  href="#"
+                  data-bs-toggle="dropdown"
+                  >Features</a
+                >
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="#">Features 1</a></li>
+                  <li><a class="dropdown-item" href="#">Features 2</a></li>
+                  <li><a class="dropdown-item" href="#">Features 3</a></li>
+                </ul>
+              </li>
+            </ul>
+
+            <div class="d-lg-flex col-lg-6 justify-content-lg-center">
+              <a href="#">KANHA MEDIA</a>
+            </div>
+
+            <div class="d-lg-flex col-lg-3 justify-content-lg-end">
+              <button class="btn btn-primary">Profile</button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <div class="container mt-5">
+        <div class="row">
+          <div class="col-md-8" id="step1" style="display: block">
+            <div class='row mb-3 bg-white'>
+              <div class="col-md-3 p-3">
+                <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4">
+              </div>
+              <div class="col-md-9 p-3">
+                <h6>STEP 1</h6>
+                <h3>Pilih Domain</h3>
+                <p>Pemilihan nama domain dapat menjadi salah satu langkah penting dalam membangun brand atau bisnis kamu</p>
+              </div>
+            </div>
+            
+            <div class='row mb-3 bg-white p-3'>
+              <form onsubmit="event.preventDefault(); searchDomain();">
+                <div class="input-group mb-3">
+                  <input type="text" class="form-control" placeholder="kanhamedia.com" />
+                  <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" id="button-addon2" onclick="searchDomain()">
+                      Cari Domain
+                    </button>
+                  </div>
+                </div>
+              </form>
+              <h5>Rekomendasi</h5>
+              <div class="list-group p-3" id="recommendation-list"></div>
+            </div>
+          </div>
+
+          <div class="col-md-8" id="step2" style="display: none">
+            
+            <div class='row mb-3 bg-white'>
+              <div class="col-md-3 p-3">
+                <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4">
+              </div>
+              <div class="col-md-9 p-3">
+                <h6>STEP 2</h6>
+                <h3>Pilih Template</h3>
+                <p>Pilihlah template website dengan mencocokan brand identitas usaha kamu. Sangat mudah bukan?</p>
+              </div>
+            </div>
+            
+            <div class='row mb-3 bg-white p-3'>
+              
+              <div class="col-md-4 p-3">
+                <div class="card">
+                  <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4" class="card-img-top" alt="Template 1"/>
+                  <div class="card-body text-center">
+                    <h5 class="card-title">Template 1</h5>
+                    <button class="btn btn-primary" onclick="selectTemplate('Template 1')">
+                      Pilih Template
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4 p-3">
+                <div class="card">
+                  <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4" class="card-img-top" alt="Template 2"/>
+                  <div class="card-body text-center">
+                    <h5 class="card-title">Template 2</h5>
+                    <button class="btn btn-primary" onclick="selectTemplate('Template 2')">
+                      Pilih Template
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4 p-3">
+                <div class="card">
+                  <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4" class="card-img-top" alt="Template 3"/>
+                  <div class="card-body text-center">
+                    <h5 class="card-title">Template 3</h5>
+                    <button class="btn btn-primary" onclick="selectTemplate('Template 3')">
+                      Pilih Template
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4 p-3">
+                <div class="card">
+                  <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4" class="card-img-top" alt="Template 4"/>
+                  <div class="card-body text-center">
+                    <h5 class="card-title">Template 4</h5>
+                    <button class="btn btn-primary" onclick="selectTemplate('Template 4')">
+                      Pilih Template
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4 p-3">
+                <div class="card">
+                  <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4" class="card-img-top" alt="Template 5"/>
+                  <div class="card-body text-center">
+                    <h5 class="card-title">Template 5</h5>
+                    <button class="btn btn-primary" onclick="selectTemplate('Template 5')">
+                      Pilih Template
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4 p-3">
+                <div class="card">
+                  <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4" class="card-img-top" alt="Template 6"/>
+                  <div class="card-body text-center">
+                    <h5 class="card-title">Template 6</h5>
+                    <button class="btn btn-primary" onclick="selectTemplate('Template 6')">
+                      Pilih Template
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="col-md-8" id="step3" style="display: none">
+            
+            <div class='row mb-3 bg-white'>
+              <div class="col-md-3 p-3">
+                <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4">
+              </div>
+              <div class="col-md-9 p-3">
+                <h6>STEP 3</h6>
+                <h3>Lengkapi Data</h3>
+                <p>Lengkapi data diri kamu sebagai syarat pembelian domain,jika kamu membeli domain .co.id maka dibutuhkan tambahkan data berupa NPWP Perusahaan dan AKTA/SIUP Perusahaan</p>
+              </div>
+            </div>
+
+            <div class='row mb-3 bg-white p-3'>
+              <div class="mb-3">
+                <label for="ktp-number" class="form-label">No. KTP</label>
+                <input type="text" class="form-control" id="ktp-number" placeholder="Masukkan No. KTP" required />
+                <div id="ktp-error" class="text-danger p-2"></div>
+              </div>
+              <div class="mb-3">
+                <label for="name" class="form-label">Nama Kamu</label>
+                <input type="text" class="form-control" id="name" placeholder="Masukkan Nama" required />
+                <div id="name-error" class="text-danger p-2"></div>
+              </div>
+              <div class="mb-3">
+                <label for="email" class="form-label">Alamat Email</label>
+                <input type="email" class="form-control" id="email" placeholder="Masukkan Email" required />
+                <div id="email-error" class="text-danger p-2"></div>
+              </div>
+              <div class="mb-3">
+                <label for="phone" class="form-label">No Handphone</label>
+                <input type="text" class="form-control" id="phone" placeholder="Masukkan No. Handphone" required />
+                <div id="phone-error" class="text-danger p-2"></div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="upload-file" class="form-label">Upload File</label>
+                <input type="file" class="form-control" id="upload-file" required />
+              </div>
+            </div>
+
+          </div>
+
+          <div class="col-md-8" id="step4" style="display: none">
+            
+            <div class='row mb-3 bg-white'>
+              <div class="col-md-3 p-3">
+                <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4">
+              </div>
+              <div class="col-md-9 p-3">
+                <h6>STEP 4</h6>
+                <h3>Pilih Template</h3>
+                <p>Pilih paket berlangganan yang sesuai dengan kebutuhanmu </p>
+              </div>
+            </div>
+            
+              <div class="row mb-3 bg-white p-3">
+                  <div class="col-md-4">
+                      <div class="card">
+                          <div class="card-body">
+                              <input type="radio" name="paket" id="paket1" class="form-check-input">
+                              <label for="paket1" class="form-check-label">
+                                  <h6>#1</h6>
+                                  <h5>1 Tahun Berlangganan</h5>
+                                  <p>Sudah termasuk Domain, Hosting, dan Web Template</p>
+                                  <strong>Rp 1.747.000</strong>
+                              </label>
+                          </div>
+                      </div>
+                  </div>
+      
+                  <div class="col-md-4">
+                      <div class="card">
+                          <div class="card-body">
+                              <input type="radio" name="paket" id="paket2" class="form-check-input">
+                              <label for="paket2" class="form-check-label">
+                                  <h6>#2</h6>
+                                  <h5>2 Tahun Berlangganan</h5>
+                                  <p>Sudah termasuk Domain, Hosting, dan Web Template</p>
+                                  <strong>Rp 2.544.000</strong>
+                              </label>
+                          </div>
+                      </div>
+                  </div>
+      
+                  <div class="col-md-4">
+                      <div class="card">
+                          <div class="card-body">
+                              <input type="radio" name="paket" id="paket3" class="form-check-input">
+                              <label for="paket3" class="form-check-label">
+                                  <h6>#3</h6>
+                                  <h5>3 Tahun Berlangganan</h5>
+                                  <p>Sudah termasuk Domain, Hosting, dan Web Template</p>
+                                  <strong>Rp 3.341.000</strong>
+                              </label>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+      
+              <h6 class="card-title mt-3">Metode Pembayaran</h6>
+              <div class="col-md-12">
+                  <div class="card">
+                      <div class="card-body">
+                          <div class="form-group">
+                              <input type="radio" name="metode" id="metode1" class="form-check-input">
+                              <label for="metode1" class="form-check-label ml-2">
+                                  <strong>Xendit</strong>
+                                  <span>Mendukung beberapa metode pembayaran</span>
+                              </label>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+      
+              <h6 class="card-title m-3">Pembayaran yang didukung</h6>
+      
+              <div class="col-md-12">
+                  <div class="card">
+                      <div class="card-body">
+                          <div class="row">
+                              <!-- Tambahkan ikon pembayaran di sini -->
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Ringkasan Pemesanan</h5>
+                <div id="order-summary" class="list-group mb-3"></div>
+                <p class="card-text text-end p-2"> Total Biaya: <strong id="total-cost">Rp 0</strong> </p>
+                <button id="continue-button" class="btn btn-primary mt-3" disabled onclick="goToNextStep()">
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="modal fade" id="orderModal" tabindex="-1" role="dialog" aria-labelledby="orderModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orderModalLabel">Pesanan Kamu Sedang diproses!!!</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                  Terima kasih atas pesanan Anda! Kami sedang memproses pesanan Anda dan akan segera mengirimkannya kepada Anda. Mohon ditunggu, kami akan mengirimkan notifikasi melalui Email atau WhatsApp setelah pesanan Anda dikirim.
+                </div>
+                <div class="modal-footer">
+                    <!--<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>-->
+                    <a href="/order" class="btn btn-primary">Lihat Pesanan</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+      <div class="container">
+        <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top" >
+          <p class="col-md-4 mb-0 text-body-secondary"> &copy; 2024 Company, Inc </p>
+
+          <div class="col-md-4 justify-content-end">
+            All Rights Reserved | <a href = "">Terms and Conditions</a> | <a href = "">Privacy Policy</a>
+          </div>
+
+        </footer>
+
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+      </div>
+    </div>
+  </body>
+</html>
