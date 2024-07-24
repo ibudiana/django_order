@@ -10,15 +10,19 @@
     {% bootstrap_javascript %}
 
     <script>
-
       let totalCost = 0;
       let selectedDomains = [];
       let selectedTemplates = [];
       let selectedPackage = null;
       let selectedPaymentMethod = null;
+      const formatter = new Intl.NumberFormat('id-ID', {
+        style: 'decimal',
+        minimumFractionDigits: 0
+      });
+    
 
       function searchDomain() {
-        const recommendations = [ { domain: "kanhamedia.id", price: 327000 }, { domain: "kanhamedia.co.id", price: 527000 }, ];
+        const recommendations = [ { domain: "kanhamedia.com", price: 327000, available: false }, { domain: "kanhamedia.id", price: 327000, available: true }, { domain: "kanhamedia.co.id", price: 527000, available: true }, ];
 
         const recommendationList          = document.getElementById("recommendation-list");
         recommendationList.innerHTML      = "";
@@ -26,12 +30,21 @@
         recommendations.forEach((item) => {
           const listItem                  = document.createElement("div");
           listItem.className              = "list-group-item list-group-item-action d-flex justify-content-between align-items-center";
-          listItem.innerHTML              = `${item.domain}
-          <div class="d-flex flex-column align-items-end">
-            <small class="text-muted"><s>Rp 400.000</s></small>
-            <strong>Rp ${item.price} / tahun</strong>
-            <button class="btn btn-primary btn-sm mt-2" onclick="addDomain('${item.domain}', ${item.price})">Pilih</button>
-          </div>`;
+          if(item.available == true){
+            listItem.innerHTML              = `${item.domain}
+            <div class="d-flex flex-column align-items-end">
+              <small class="text-muted"><s>Rp 400.000</s></small>
+              <strong>Rp ${formatter.format(item.price)} / tahun</strong>
+              <button class="btn btn-primary btn-sm mt-2" onclick="addDomain('${item.domain}', ${item.price})">Pilih</button>
+            </div>`;
+          }else{
+            listItem.innerHTML              = `${item.domain}
+            <div class="d-flex flex-column align-items-end">
+              <div class="alert alert-danger" role="alert">
+              <i>Maaf domain yang anda cari tidak tersedia</i>
+              </div>
+            </div>`;
+          }
           recommendationList.appendChild(listItem);
         });
       }
@@ -70,36 +83,51 @@
       function updateSummary() {
         const summary = document.getElementById("order-summary");
         summary.innerHTML = "";
+        let dataPesanan = {
+          'nama_domain'       : '',
+          'harga_domain'      : '',
+          'nama_template'     : '',
+          'harga_template'    : '',
+          'paket_langganan'   : '',
+          'harga_langganan'   : '',
+          'payment_method'    : '',
+        };
     
         // Ringkasan Domain
         selectedDomains.forEach(({ domain, price }) => {
             const newItem = document.createElement("div");
             newItem.className = "list-group-item d-flex justify-content-between align-items-center";
-            newItem.innerHTML = `${domain} <span class="badge badge-pill text-dark">${price}</span>`;
+            newItem.innerHTML = `${domain} <span class="badge badge-pill text-dark">${formatter.format(price)}</span>`;
             summary.appendChild(newItem);
+            dataPesanan.nama_domain       = domain;
+            dataPesanan.harga_domain      = price;
         });
     
         // Ringkasan Template
         selectedTemplates.forEach(({ title, price }) => {
             const newItem = document.createElement("div");
             newItem.className = "list-group-item d-flex justify-content-between align-items-center";
-            newItem.innerHTML = `${title} <span class="badge badge-pill text-dark">${price}</span>`;
+            newItem.innerHTML = `${title} <span class="badge badge-pill text-dark">${formatter.format(price)}</span>`;
             summary.appendChild(newItem);
+            dataPesanan.nama_template     = title;
+            dataPesanan.harga_template    = price;
         });
     
         // Ringkasan Paket
         if (selectedPackage) {
             const newItem = document.createElement("div");
             newItem.className = "list-group-item d-flex justify-content-between align-items-center";
-            newItem.innerHTML = `${selectedPackage.id} <span class="badge badge-pill text-dark">${selectedPackage.price}</span>`;
+            newItem.innerHTML = `${selectedPackage.id} <span class="badge badge-pill text-dark">${formatter.format(selectedPackage.price)}</span>`;
             summary.appendChild(newItem);
+            dataPesanan.paket_langganan   = selectedPackage.id;
+            dataPesanan.harga_langganan   = selectedPackage.price;
         }
 
         if (selectedPaymentMethod) {
-          const continueButton = document.getElementById("continue-button");
-          continueButton.outerHTML = '<button type="button" class="btn btn-primary mt-3" data-toggle="modal" data-target="#orderModal">Pesan Sekarang</button>';        
-          //const continueButton = document.getElementById("continue-button");
-          //continueButton.outerHTML = '<a href="/order" class="btn btn-primary mt-3">Pesan Sekarang</a>';
+          dataPesanan.payment_method      = selectedPaymentMethod;    
+          dataPesananPelanggan(dataPesanan)
+          const continueButton            = document.getElementById("continue-button");
+          continueButton.outerHTML        = '<button type="button" class="btn btn-primary mt-3" data-toggle="modal" data-target="#orderModal">Pesan Sekarang</button>';
         }
     
         // Hitung total biaya
@@ -107,7 +135,8 @@
                     selectedTemplates.reduce((sum, { price }) => sum + price, 0) + 
                     (selectedPackage ? selectedPackage.price : 0);
     
-        document.getElementById("total-cost").innerText = `Rp ${totalCost}`;
+        document.getElementById("total-cost").innerText = `Rp ${formatter.format(totalCost)}`;
+        
       }
 
       let currentStep = 1;
@@ -158,13 +187,13 @@
         const email         = document.getElementById("email").value;
         const phone         = document.getElementById("phone").value;
     
-        const isKtpValid = /^\d{15}$/.test(ktpNumber);
+        const isKtpValid = /^\d{16}$/.test(ktpNumber);
         const isNameValid = /^[A-Za-z\s]+$/.test(name);
         const isEmailValid = /.+@.+\..+/.test(email);
         const isPhoneValid = /^\d+$/.test(phone);
     
         if (ktpNumber) {
-            document.getElementById("ktp-error").innerText = isKtpValid ? "" : "KTP harus 15 digit angka.";
+            document.getElementById("ktp-error").innerText = isKtpValid ? "" : "KTP harus 16 digit angka.";
         }
         if (name) {
             document.getElementById("name-error").innerText = isNameValid ? "" : "Nama hanya boleh huruf.";
@@ -196,6 +225,42 @@
         });
 
      });
+
+    function dataPesananPelanggan(dataPesanan) {
+      const detailPesanan = document.querySelector('#dataPesanan');
+      detailPesanan.innerHTML = `
+        <table>
+            <tr>
+                <td>Nama Domain</td>
+                <td>: ${dataPesanan.nama_domain}</td>
+            </tr>
+            <tr>
+                <td>Harga Domain</td>
+                <td>: Rp ${formatter.format(dataPesanan.harga_domain)}</td>
+            </tr>
+            <tr>
+                <td>Nama Template</td>
+                <td>: ${dataPesanan.nama_template}</td>
+            </tr>
+            <tr>
+                <td>Harga Template</td>
+                <td>: Rp ${formatter.format(dataPesanan.harga_template)}</td>
+            </tr>
+            <tr>
+                <td>Paket Langganan</td>
+                <td>: ${dataPesanan.paket_langganan}</td>
+            </tr>
+            <tr>
+                <td>Harga Langganan</td>
+                <td>: Rp ${formatter.format(dataPesanan.harga_langganan)}</td>
+            </tr>
+            <tr>
+                <td>Payment Method</td>
+                <td>: ${dataPesanan.payment_method}</td>
+            </tr>
+        </table>
+    `;
+    }
     
     </script>
 
@@ -252,7 +317,7 @@
           <div class="col-md-8" id="step1" style="display: block">
             <div class='row mb-3 bg-white'>
               <div class="col-md-3 p-3">
-                <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4">
+                <img src="https://images.websitebuilderexpert.com/wp-content/uploads/2018/01/01030049/How-to-Choose-a-Domain-Name-featured-image.png" width="200px" height="200px">
               </div>
               <div class="col-md-9 p-3">
                 <h6>STEP 1</h6>
@@ -264,7 +329,7 @@
             <div class='row mb-3 bg-white p-3'>
               <form onsubmit="event.preventDefault(); searchDomain();">
                 <div class="input-group mb-3">
-                  <input type="text" class="form-control" placeholder="kanhamedia.com" />
+                  <input type="text" class="form-control" placeholder="kanhamedia.com" disabled/>
                   <div class="input-group-append">
                     <button class="btn btn-outline-secondary" type="button" id="button-addon2" onclick="searchDomain()">
                       Cari Domain
@@ -281,7 +346,7 @@
             
             <div class='row mb-3 bg-white'>
               <div class="col-md-3 p-3">
-                <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4">
+                <img src="https://cdn1.justfreeslide.com/2022/10/Why-Choose-Us-PPT-Template5.jpeg" width="200px" height="200px">
               </div>
               <div class="col-md-9 p-3">
                 <h6>STEP 2</h6>
@@ -294,7 +359,7 @@
               
               <div class="col-md-4 p-3">
                 <div class="card">
-                  <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4" class="card-img-top" alt="Template 1"/>
+                  <img src="https://bootstrapmade.com/content/templatefiles/QuickStart/QuickStart-bootstrap-website-template-md.webp" class="card-img-top" alt="Template 1"/>
                   <div class="card-body text-center">
                     <h5 class="card-title">Template 1</h5>
                     <button class="btn btn-primary" onclick="selectTemplate('Template 1')">
@@ -306,7 +371,7 @@
 
               <div class="col-md-4 p-3">
                 <div class="card">
-                  <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4" class="card-img-top" alt="Template 2"/>
+                  <img src="https://bootstrapmade.com/content/templatefiles/Append/Append-bootstrap-website-template-md.webp" class="card-img-top" alt="Template 2"/>
                   <div class="card-body text-center">
                     <h5 class="card-title">Template 2</h5>
                     <button class="btn btn-primary" onclick="selectTemplate('Template 2')">
@@ -318,7 +383,7 @@
 
               <div class="col-md-4 p-3">
                 <div class="card">
-                  <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4" class="card-img-top" alt="Template 3"/>
+                  <img src="https://bootstrapmade.com/content/templatefiles/Arsha/Arsha-bootstrap-website-template-md.webp" class="card-img-top" alt="Template 3"/>
                   <div class="card-body text-center">
                     <h5 class="card-title">Template 3</h5>
                     <button class="btn btn-primary" onclick="selectTemplate('Template 3')">
@@ -330,7 +395,7 @@
 
               <div class="col-md-4 p-3">
                 <div class="card">
-                  <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4" class="card-img-top" alt="Template 4"/>
+                  <img src="https://bootstrapmade.com/content/templatefiles/Selecao/Selecao-bootstrap-website-template-md.webp" class="card-img-top" alt="Template 4"/>
                   <div class="card-body text-center">
                     <h5 class="card-title">Template 4</h5>
                     <button class="btn btn-primary" onclick="selectTemplate('Template 4')">
@@ -342,7 +407,7 @@
 
               <div class="col-md-4 p-3">
                 <div class="card">
-                  <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4" class="card-img-top" alt="Template 5"/>
+                  <img src="https://bootstrapmade.com/content/templatefiles/Active/Active-bootstrap-website-template-md.webp" class="card-img-top" alt="Template 5"/>
                   <div class="card-body text-center">
                     <h5 class="card-title">Template 5</h5>
                     <button class="btn btn-primary" onclick="selectTemplate('Template 5')">
@@ -354,7 +419,7 @@
 
               <div class="col-md-4 p-3">
                 <div class="card">
-                  <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4" class="card-img-top" alt="Template 6"/>
+                  <img src="https://bootstrapmade.com/content/templatefiles/AgriCulture/AgriCulture-bootstrap-website-template-md.webp" class="card-img-top" alt="Template 6"/>
                   <div class="card-body text-center">
                     <h5 class="card-title">Template 6</h5>
                     <button class="btn btn-primary" onclick="selectTemplate('Template 6')">
@@ -371,7 +436,7 @@
             
             <div class='row mb-3 bg-white'>
               <div class="col-md-3 p-3">
-                <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4">
+                <img src="https://cdn.analyticsvidhya.com/wp-content/uploads/2024/01/i2.jpg" width="200px" height="200px">
               </div>
               <div class="col-md-9 p-3">
                 <h6>STEP 3</h6>
@@ -414,7 +479,7 @@
             
             <div class='row mb-3 bg-white'>
               <div class="col-md-3 p-3">
-                <img src="https://fastly.picsum.photos/id/984/200/200.jpg?hmac=ffnu-AL0Ppy1NASA-nJXcj_BHBepOjLaPhPjYWDq1T4">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRg5NtdjIyD21F9BzNuNLxElNAcXw4C5OrjFQ&s" width="200px" height="200px">
               </div>
               <div class="col-md-9 p-3">
                 <h6>STEP 4</h6>
@@ -521,11 +586,14 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                  Terima kasih atas pesanan Anda! Kami sedang memproses pesanan Anda dan akan segera mengirimkannya kepada Anda. Mohon ditunggu, kami akan mengirimkan notifikasi melalui Email atau WhatsApp setelah pesanan Anda dikirim.
+                  Terima kasih atas pesanan Anda! <br>
+                  Kami sedang memproses pesanan Anda dan akan segera mengirimkannya kepada Anda. <br>
+                  Mohon ditunggu, kami akan mengirimkan notifikasi melalui Email atau WhatsApp. <br>
+                  Berikut detail pesanan anda:
+                  <div id="dataPesanan"></div>
                 </div>
                 <div class="modal-footer">
-                    <!--<button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>-->
-                    <a href="/order" class="btn btn-primary">Lihat Pesanan</a>
+                    <a href="/order" class="btn btn-primary">Order Lagi</a>
                 </div>
             </div>
         </div>
