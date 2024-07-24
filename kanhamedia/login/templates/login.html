@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}{% endblock %}</title>
+
+    {% load bootstrap5 %} 
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+
+    <script>
+      const userLoginAdmin = {
+        'user' : 'admin@kanhamedia.com',
+        'password' : '12345'
+      }
+
+      function login(){
+        event.preventDefault();
+        
+        const email     = document.getElementById('email').value;
+        const password  = document.getElementById('password').value;
+        const remember  = document.getElementById('remember').checked;
+
+        if(email == userLoginAdmin.user && password == userLoginAdmin.password){
+          document.querySelector('#login').classList.add('d-none')
+          document.querySelector('#dashboarSummary').classList.toggle('d-none')
+        }else{
+          alert("Password Salah")
+        }
+      }
+
+      function viewOrder(){
+        document.querySelector('#dashboardFull').classList.toggle('d-none')
+        document.querySelector('#dashboarSummary').classList.toggle('d-none')
+      }
+    
+    </script>
+
+  </head>
+  <body class="bg-light" onload="populateForm()"> 
+    <div class="container">
+      <nav class="navbar navbar-expand-lg bg-body-tertiary rounded bg-white">
+        <div class="container-fluid">
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarsExample11"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarsExample11">
+            <ul class="navbar-nav col-lg-3 justify-content-lg">
+              <li class="nav-item">
+                <a class="nav-link active" href="#">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">About</a>
+              </li>
+              <li class="nav-item dropdown">
+                <a
+                  class="nav-link dropdown-toggle"
+                  href="#"
+                  data-bs-toggle="dropdown"
+                  >Features</a
+                >
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" href="#">Features 1</a></li>
+                  <li><a class="dropdown-item" href="#">Features 2</a></li>
+                  <li><a class="dropdown-item" href="#">Features 3</a></li>
+                </ul>
+              </li>
+            </ul>
+
+            <div class="d-lg-flex col-lg-6 justify-content-lg-center">
+              <a href="#">KANHA MEDIA</a>
+            </div>
+
+            <div class="d-lg-flex col-lg-3 justify-content-lg-end">
+              <button class="btn btn-primary">Profile</button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <div id="dashboardFull" class="container my-4 d-none">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1>Customer Detail</h1>
+            <div>
+                <button class="btn btn-outline-secondary mr-2">Export</button>
+                <button class="btn btn-outline-primary">Add user</button>
+            </div>
+        </div>
+        <div class="input-group mb-4">
+            <input type="text" class="form-control" placeholder="Search Customer" aria-label="Search Customer">
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <form>
+                    <div class="form-group">
+                        <label for="ktp">No. KTP</label>
+                        <input type="text" class="form-control" id="ktp" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="nama">Nama</label>
+                        <input type="text" class="form-control" id="nama" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" id="email-pemesan" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="handphone">Handphone</label>
+                        <input type="text" class="form-control" id="handphone" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="nama-domain">Nama Domain</label>
+                        <input type="text" class="form-control" id="nama-domain" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="template">Template</label>
+                        <input type="text" class="form-control" id="template" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="paket-hosting">Paket Hosting</label>
+                        <input type="text" class="form-control" id="paket-hosting" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="payment-status">Payment Status</label>
+                        <input type="text" class="form-control" id="payment-status" value="">
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <h5>Lampiran Dokumen</h5>
+                <div class="document-attachment mb-4"></div>
+                <div class="document-attachment mb-4"></div>
+                <div class="document-attachment mb-4"></div>
+                <div class="document-attachment mb-4"></div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end">
+            <button class="btn btn-secondary" onclick="viewOrder()">BACK</button>
+        </div>
+    </div>
+
+      <div id="dashboarSummary" class="container my-4 d-none">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1>Data Customer</h1>
+            <div>
+                <button class="btn btn-outline-secondary mr-2">Export</button>
+                <button class="btn btn-outline-primary">Add user</button>
+            </div>
+        </div>
+        <div class="input-group mb-4">
+            <input type="text" class="form-control" placeholder="Search Customer" aria-label="Search Customer">
+        </div>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">CUSTOMER</th>
+                    <th scope="col">EMAIL</th>
+                    <th scope="col">MOBILE NUMBER</th>
+                    <th scope="col">PAYMENT</th>
+                    <th scope="col">ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="tabel_nama"></td>
+                    <td id="tabel_email"></td>
+                    <td id="tabel_handphone"></td>
+                    <td id="tabel_payment"></td>
+                    <td><a href="#" class="btn btn-link" onclick="viewOrder()">VIEW ORDER</a></td>
+                </tr>
+                <!-- Tambahkan baris tambahan sesuai kebutuhan -->
+            </tbody>
+        </table>
+    </div>
+
+      
+      <div id="login" class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="card p-4" style="width: 35rem;">
+            <h5 class="card-title text-center">LOGIN DASHBOARD</h5>
+            <hr>
+            <div class="card-body">
+                <h2 class="card-title">Hi, welcome back!</h2>
+                <p class="card-text">We are happy that you are coming back. You are always welcome.</p>
+                <form onsubmit="login(event)">
+                    <div class="form-group mb-4">
+                        <label for="email">Email address</label>
+                        <input type="email" class="form-control" id="email" placeholder="Email address">
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="password">Password</label>
+                        <input type="password" class="form-control" id="password" placeholder="Password">
+                    </div>
+                    <div class="form-check mb-4">
+                        <input type="checkbox" class="form-check-input" id="remember">
+                        <label class="form-check-label" for="remember">Remember me</label>
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-block" onclick="login();">SUBMIT</button>
+                </form>
+                <hr>
+                <a href="#" class="card-link">Forgotten password?</a>
+            </div>
+        </div>
+    </div>
+
+      <div class="container">
+        <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top" >
+          <p class="col-md-4 mb-0 text-body-secondary"> &copy; 2024 Company, Inc </p>
+
+          <div class="col-md-4 justify-content-end">
+            All Rights Reserved | <a href = "">Terms and Conditions</a> | <a href = "">Privacy Policy</a>
+          </div>
+
+        </footer>
+
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script>
+          
+          function populateForm() {
+              const data = JSON.parse(sessionStorage.getItem("dataPesanan"));
+              console.log("hello");
+  
+              if (data) {
+                  document.getElementById('ktp').value = data.ktp || ''; 
+                  document.getElementById('nama').value = data.nama || '';
+                  document.getElementById('email-pemesan').value = data.email || '';
+                  document.getElementById('handphone').value = data.handphone || '';
+                  document.getElementById('nama-domain').value = data.nama_domain || '';
+                  document.getElementById('template').value = data.nama_template || '';
+                  document.getElementById('paket-hosting').value = data.paket_langganan || '';
+                  document.getElementById('payment-status').value = data.payment_method || '';
+
+                  document.getElementById('tabel_nama').innerText = data.nama || '';
+                  document.getElementById('tabel_email').innerText = data.email || '';
+                  document.getElementById('tabel_handphone').innerText = data.handphone || '';
+                  document.getElementById('tabel_payment').innerText = data.payment_method || '';
+              }
+          }
+      </script>
+      </div>
+    </div>
+  </body>
+</html>

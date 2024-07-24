@@ -19,6 +19,21 @@
         style: 'decimal',
         minimumFractionDigits: 0
       });
+
+      let dataPesanan = {
+        'ktp'               : '',
+        'nama'              : '',
+        'email'             : '',
+        'handphone'         : '',
+        'files'             : [],
+        'nama_domain'       : '',
+        'harga_domain'      : '',
+        'nama_template'     : '',
+        'harga_template'    : '',
+        'paket_langganan'   : '',
+        'harga_langganan'   : '',
+        'payment_method'    : '',
+      };
     
 
       function searchDomain() {
@@ -83,15 +98,6 @@
       function updateSummary() {
         const summary = document.getElementById("order-summary");
         summary.innerHTML = "";
-        let dataPesanan = {
-          'nama_domain'       : '',
-          'harga_domain'      : '',
-          'nama_template'     : '',
-          'harga_template'    : '',
-          'paket_langganan'   : '',
-          'harga_langganan'   : '',
-          'payment_method'    : '',
-        };
     
         // Ringkasan Domain
         selectedDomains.forEach(({ domain, price }) => {
@@ -208,6 +214,13 @@
         const isFormValid = isKtpValid && isNameValid && isEmailValid && isPhoneValid;
     
         document.getElementById("continue-button").disabled = !isFormValid;
+
+        dataPesanan.ktp         = ktpNumber;
+        dataPesanan.nama        = name;
+        dataPesanan.email       = email;
+        dataPesanan.handphone   = phone;
+        dataPesanan.files       = [];
+        
       } 
 
       document.addEventListener('DOMContentLoaded', () => {
@@ -227,6 +240,11 @@
      });
 
     function dataPesananPelanggan(dataPesanan) {
+      let dataPesananSave = JSON.stringify(dataPesanan);
+
+      // Menyimpan string JSON ke sessionStorage
+      sessionStorage.setItem("dataPesanan", dataPesananSave);
+      
       const detailPesanan = document.querySelector('#dataPesanan');
       detailPesanan.innerHTML = `
         <table>
@@ -306,7 +324,7 @@
             </div>
 
             <div class="d-lg-flex col-lg-3 justify-content-lg-end">
-              <button class="btn btn-primary">Profile</button>
+              <button class="btn btn-primary" onclick="window.location.href='/login/';">Profile</button>
             </div>
           </div>
         </div>
